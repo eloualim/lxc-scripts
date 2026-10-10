@@ -1,0 +1,15 @@
+name: Check scripts
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bash syntax
+        run: bash -n create-odoo.sh && bash -n install-odoo.sh && bash -n tests/test-create.sh
+      - name: ShellCheck
+        run: shellcheck create-odoo.sh install-odoo.sh tests/test-create.sh
+      - name: Proxmox simulation
+        run: sudo bash tests/test-create.sh

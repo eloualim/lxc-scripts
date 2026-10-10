@@ -17,6 +17,7 @@ VERSION=${1:-}
 for cmd in pct pveam pvesm pvesh git; do command -v "$cmd" >/dev/null || die "$cmd absent."; done
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 [[ -f $SCRIPT_DIR/install-odoo.sh ]] || die 'Cloner le dépôt complet.'
+[[ -f $SCRIPT_DIR/install-pdf.sh ]] || die 'Installateur PDF absent : mettre à jour le dépôt complet.'
 STORAGE=${STORAGE:-local-lvm}; TEMPLATE_STORAGE=${TEMPLATE_STORAGE:-local}
 BRIDGE=${BRIDGE:-vmbr0}; IP=${IP:-dhcp}; GATEWAY=${GATEWAY:-}
 CORES=${CORES:-2}; MEMORY=${MEMORY:-4096}; DISK=${DISK:-24}
@@ -57,6 +58,7 @@ for ((i=0; i<60; i++)); do
 done
 [[ $ready == 1 ]] || die 'Réseau/DNS indisponible après 120 secondes ; CT conservé.'
 pct push "$CTID" "$SCRIPT_DIR/install-odoo.sh" /root/install-odoo.sh --perms 700
+pct push "$CTID" "$SCRIPT_DIR/install-pdf.sh" /root/install-pdf.sh --perms 700
 if [[ -n ${SSH_PUBLIC_KEY:-} ]]; then
   pct push "$CTID" "$SSH_PUBLIC_KEY" /root/dev-authorized-key --perms 600
 fi

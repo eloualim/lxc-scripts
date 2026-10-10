@@ -6,6 +6,8 @@ die() { echo "Erreur : $*" >&2; exit 1; }
 VERSION=${1:-}
 [[ $VERSION =~ ^(18|19|20)$ ]] || die 'Version attendue : 18, 19 ou 20.'
 [[ $EUID == 0 ]] || die 'Root requis.'
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+[[ -f $SCRIPT_DIR/install-pdf.sh ]] || die 'install-pdf.sh doit être présent à côté de cet installateur.'
 # shellcheck disable=SC1091
 source /etc/os-release
 [[ $ID == ubuntu && $VERSION_ID == 24.04 ]] || die 'Ubuntu 24.04 requis.'
@@ -27,6 +29,7 @@ getent group odoo >/dev/null || groupadd --system odoo
 id odoo >/dev/null 2>&1 || useradd --system --gid odoo --home-dir /opt/odoo --shell /bin/bash odoo
 id dev >/dev/null 2>&1 || useradd --create-home --shell /bin/bash dev
 usermod -aG odoo dev
+bash "$SCRIPT_DIR/install-pdf.sh"
 install -d -o odoo -g odoo -m 0755 /opt/odoo
 install -d -o odoo -g odoo -m 0750 /var/lib/odoo /var/log/odoo
 install -d -o dev -g odoo -m 2770 /opt/odoo/custom-addons
@@ -89,6 +92,7 @@ User=odoo
 Group=odoo
 WorkingDirectory=/opt/odoo/src
 Environment=HOME=/opt/odoo
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
 ExecStart=/opt/odoo/venv/bin/python /opt/odoo/src/odoo-bin -c /etc/odoo.conf --dev=reload,xml,qweb
 Restart=on-failure
 RestartSec=5

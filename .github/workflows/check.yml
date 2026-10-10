@@ -8,8 +8,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Bash syntax
-        run: bash -n create-odoo.sh && bash -n install-odoo.sh && bash -n tests/test-create.sh
+        run: bash -n create-odoo.sh && bash -n install-odoo.sh && bash -n install-pdf.sh && bash -n tests/test-create.sh
       - name: ShellCheck
-        run: shellcheck create-odoo.sh install-odoo.sh tests/test-create.sh
+        run: shellcheck create-odoo.sh install-odoo.sh install-pdf.sh tests/test-create.sh
       - name: Proxmox simulation
         run: sudo bash tests/test-create.sh
+  pdf:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install and render PDF twice in clean Ubuntu 24.04
+        run: |
+          docker run --rm -v "$PWD:/src:ro" ubuntu:24.04 bash -ec '
+            groupadd --system odoo
+            useradd --system --gid odoo --create-home odoo
+            bash /src/install-pdf.sh
+            bash /src/install-pdf.sh
+          '

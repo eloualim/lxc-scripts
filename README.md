@@ -1,6 +1,6 @@
 # Odoo 18, 19 et 20 — LXC de développement sur Proxmox VE
 
-Un conteneur **non privilégié Ubuntu 24.04** par version, avec Odoo **Community** depuis sa branche officielle, Python isolé, PostgreSQL et un service systemd. Les branches `18.0`, `19.0` et `20.0` sont vérifiées avant création ; aucun remplacement par `master`.
+Un conteneur **non privilégié Ubuntu 24.04 amd64** par version, avec Odoo **Community** depuis sa branche officielle, Python isolé, PostgreSQL, le moteur PDF **wkhtmltopdf 0.12.6.1 avec Qt patché** et un service systemd. Les branches `18.0`, `19.0` et `20.0` sont vérifiées avant création ; aucun remplacement par `master`.
 
 ## Installation
 
@@ -101,16 +101,30 @@ Après échec, le conteneur est conservé. Corriger la cause avant reprise. Si l
 
 ```bash
 pct push ID_DU_CT install-odoo.sh /root/install-odoo.sh --perms 700
+pct push ID_DU_CT install-pdf.sh /root/install-pdf.sh --perms 700
 pct exec ID_DU_CT -- bash /root/install-odoo.sh 19
 ```
 
 La reprise conserve configuration et modules et refuse un changement de version. Un clone interrompu peut nécessiter de déplacer `/opt/odoo/src` incomplet avant reprise. L'installateur est réservé à ces conteneurs dédiés, pas à un serveur existant.
 
+## Rapports PDF et conteneurs existants
+
+Le moteur PDF est installé automatiquement pour les trois versions. Le paquet officiel `wkhtmltox 0.12.6.1-3` pour Jammy est aussi celui utilisé dans [l'image officielle Odoo sous Ubuntu Noble](https://github.com/odoo/docker/blob/master/19.0/Dockerfile). Son empreinte SHA-256 est vérifiée avant installation. Qt patché est nécessaire pour les en-têtes et pieds de page ([référence Odoo](https://github.com/odoo/odoo/wiki/Wkhtmltopdf)).
+
+L'installation génère un vrai PDF sous le compte `odoo` et vérifie son corps, son en-tête et son pied de page. Pour ajouter le moteur à un conteneur déjà créé, dans le dépôt sur **le nœud Proxmox** :
+
+```bash
+git pull --ff-only
+pct push ID_DU_CT install-pdf.sh /root/install-pdf.sh --perms 700
+pct exec ID_DU_CT -- bash /root/install-pdf.sh
+```
+
+Remplacer `ID_DU_CT` par le numéro du conteneur. Le script peut être relancé ; il redémarre Odoo si le service tourne, sans modifier les modules ni les bases. Après installation, imprimer un devis ou une facture depuis Odoo pour valider aussi le modèle QWeb et le chargement de ses ressources.
+
 ## Périmètre et validation
 
 - Développement sur réseau de confiance avec gestionnaire de bases accessible ; ne pas exposer directement le port 8069 sur Internet.
 - Pas d'Enterprise, migration de version, sauvegardes automatiques ou reverse proxy TLS.
-- `wkhtmltopdf` avec Qt patché n'est pas installé : les rapports PDF nécessitent sa configuration séparée.
-- CI : syntaxe Bash, ShellCheck et simulation du créateur Proxmox. En fin d'installation, le script vérifie la réponse HTTP d'Odoo. **L'installation réelle sur Proxmox reste à valider.**
+- CI : syntaxe Bash, ShellCheck, simulation Proxmox et installation/réinstallation du moteur avec rendu PDF sur Ubuntu 24.04 propre. En fin de provisionnement, le script vérifie la réponse HTTP d'Odoo. **L'installation réelle sur Proxmox et l'impression d'un rapport depuis Odoo restent à valider.**
 
 Références : [installation Odoo](https://www.odoo.com/documentation/19.0/administration/on_premise/source.html), [sources officielles](https://github.com/odoo/odoo), [Proxmox](https://pve.proxmox.com/pve-docs/).

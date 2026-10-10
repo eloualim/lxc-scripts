@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # PDF engine for the dedicated Ubuntu 24.04 amd64 Odoo containers.
 set -Eeuo pipefail
+umask 0022
 die() { echo "Erreur : $*" >&2; exit 1; }
 [[ $EUID == 0 ]] || die 'Root requis.'
 # shellcheck disable=SC1091
